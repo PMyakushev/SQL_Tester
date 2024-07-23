@@ -8,13 +8,14 @@ venv\Scripts\activate
 python app.py
 http://localhost:8000
 
+cp -rf //opt/SQL_Tester/my_app/Тестируемые/Ядыкин\ Алексей/*.json /opt/SQL_Tester/my_app/ResultEtalon - скопировать
 
 
 
 ssh root@2.59.43.100
 
 
-https://github.com/PMyakushev/SQL_Tester_final
+https://github.com/PMyakushev/SQL_Tester
 
 # Остановка текущего сервиса
 systemctl stop sql_tester
@@ -24,8 +25,8 @@ rm -rf /opt/SQL_Tester_final
 
 # Клонирование репозитория
 cd /opt
-git clone https://github.com/PMyakushev/SQL_Tester_final.git
-cd SQL_Tester_final
+cd /opt/SQL_Tester
+cd SQL_Tester
 
 # Настройка виртуального окружения и установка зависимостей
 python3 -m venv .venv

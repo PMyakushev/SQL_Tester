@@ -230,7 +230,7 @@ def question(id):
         return redirect(url_for('login'))
 
     elapsed_time = datetime.now(pytz.utc) - session['start_time']
-    remaining_time = timedelta(minutes=60) - elapsed_time
+    remaining_time = timedelta(minutes=90) - elapsed_time  # 90 минут вместо 40
     if remaining_time.total_seconds() <= 0:
         return redirect(url_for('finish_test'))
 
@@ -254,13 +254,14 @@ def question(id):
                            attempts=attempts, remaining_time=remaining_time, result='',
                            completed_questions=completed_questions)
 
+
 @app.route('/execute_sql', methods=['POST'])
 def execute_sql():
     if 'fio' not in session or 'start_time' not in session:
         return redirect(url_for('login'))
 
     elapsed_time = datetime.now(pytz.utc) - session['start_time']
-    remaining_time = timedelta(minutes=40) - elapsed_time
+    remaining_time = timedelta(minutes=90) - elapsed_time  # 90 минут вместо 40
     if remaining_time.total_seconds() <= 0:
         return jsonify({'error': 'Время вышло. Пожалуйста, завершите ваши действия.'})
 
@@ -284,13 +285,14 @@ def execute_sql():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+
 @app.route('/final_submit', methods=['POST'])
 def final_submit():
     if 'fio' not in session or 'start_time' not in session:
         return jsonify({'error': 'Сессия истекла, пожалуйста, войдите снова.'})
 
     elapsed_time = datetime.now(pytz.utc) - session['start_time']
-    remaining_time = timedelta(minutes=40) - elapsed_time
+    remaining_time = timedelta(minutes=90) - elapsed_time
     if remaining_time.total_seconds() <= 0:
         return jsonify({'error': 'Время вышло. Пожалуйста, завершите ваши действия.'})
 

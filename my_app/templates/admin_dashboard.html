@@ -11,8 +11,8 @@
             vertical-align: middle;
         }
         .table-form {
-            max-width: 100px; /* Устанавливаем максимальную ширину для ввода */
-            margin: 0 auto; /* Центрируем ввод в ячейке */
+            max-width: 100px;
+            margin: 0 auto;
         }
         .table thead th {
             white-space: nowrap;
@@ -29,58 +29,56 @@
         <thead class="thead-dark">
         <tr>
             <th scope="col">Тестируемый (Дата создания)</th>
-            <th scope="col">Задача 1</th>
-            <th scope="col">Задача 2</th>
-            <th scope="col">Задача 3</th>
-            <th scope="col">Задача 4</th>
-            <th scope="col">Задача 5</th>
-            <th scope="col">Задача 6</th>
-            <th scope="col">Задача 7</th>
-            <th scope="col">Excel 1</th>
-            <th scope="col">Excel 2</th>
-            <th scope="col">Excel 3</th>
-            <th scope="col">Excel 4</th>
-            <th scope="col">Excel 5</th>
+            {% for task_id in range(1, 8) %}
+            <th scope="col">Задача {{ task_id }}</th>
+            {% endfor %}
+            {% for i in range(1, 6) %}
+            <th scope="col">Excel {{ i }}</th>
+            {% endfor %}
             <th scope="col">Итого</th>
             <th scope="col">Загрузка Excel</th>
             <th scope="col">Скачать Excel</th>
         </tr>
         </thead>
         <tbody>
-            {% for user, user_data in test_results.items() %}
-            <tr>
-                <td>{{ user }} ({{ user_data.creation_date }})</td>
-                {% for task_id, result in user_data.results.items() %}
-                <td>
-                    {% if result %}
-                    <a href="{{ url_for('admin_details', user=user, task=task_id) }}" class="btn btn-success">1</a>
-                    {% else %}
-                    <a href="{{ url_for('admin_details', user=user, task=task_id) }}" class="btn btn-danger">0</a>
-                    {% endif %}
-                </td>
-                {% endfor %}
-                {% for i in range(1, 6) %}
-                <td>
-                    <form action="{{ url_for('update_excel_score', user=user, task_id='Excel_' ~ i) }}" method="POST" class="table-form">
-                        <input type="number" name="score" value="{{ user_data.excel_scores.get('Excel_' ~ i, 0) }}" min="0" max="1" step="0.1" class="form-control">
-                        <button type="submit" class="btn btn-primary mt-2">Сохранить</button>
-                    </form>
-                </td>
-                {% endfor %}
-                <td>{{ user_data.total }}</td>
-                <td>
-                    <form action="{{ url_for('upload_excel', user=user) }}" method="post" enctype="multipart/form-data" class="table-form">
-                        <input type="file" name="file" accept=".xlsx" class="form-control mb-2" required>
-                        <button type="submit" class="btn btn-primary">Загрузить</button>
-                    </form>
-                </td>
-                <td>
-                    {% for excel_file in user_data.excel_files %}
-                    <a href="{{ url_for('download_file', user=user, filename=excel_file) }}">{{ excel_file }}</a><br>
-                    {% endfor %}
-                </td>
-            </tr>
+        {% for user, user_data in test_results.items() %}
+        <tr>
+            <td>{{ user }} ({{ user_data.creation_date }})</td>
+            {% for task_id in range(1, 8) %}
+            {% if task_id in user_data.results %}
+            <td>
+                {% if user_data.results[task_id] %}
+                <a href="{{ url_for('admin_details', user=user, task=task_id) }}" class="btn btn-success">1</a>
+                {% else %}
+                <a href="{{ url_for('admin_details', user=user, task=task_id) }}" class="btn btn-danger">0</a>
+                {% endif %}
+            </td>
+            {% else %}
+            <td><a href="{{ url_for('admin_details', user=user, task=task_id) }}" class="btn btn-secondary">-</a></td>
+            {% endif %}
             {% endfor %}
+            {% for i in range(1, 6) %}
+            <td>
+                <form action="{{ url_for('update_excel_score', user=user, task_id='Excel_' ~ i) }}" method="POST" class="table-form">
+                    <input type="number" name="score" value="{{ user_data.excel_scores.get('Excel_' ~ i, 0) }}" min="0" max="1" step="0.1" class="form-control">
+                    <button type="submit" class="btn btn-primary mt-2">Сохранить</button>
+                </form>
+            </td>
+            {% endfor %}
+            <td>{{ user_data.total }}</td>
+            <td>
+                <form action="{{ url_for('upload_excel', user=user) }}" method="post" enctype="multipart/form-data" class="table-form">
+                    <input type="file" name="file" accept=".xlsx" class="form-control mb-2" required>
+                    <button type="submit" class="btn btn-primary">Загрузить</button>
+                </form>
+            </td>
+            <td>
+                {% for excel_file in user_data.excel_files %}
+                <a href="{{ url_for('download_file', user=user, filename=excel_file) }}">{{ excel_file }}</a><br>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
         </tbody>
     </table>
 </div>
