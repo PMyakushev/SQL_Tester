@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL тестирование Самокат</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Вход в систему</h1>
+        <form id="loginForm" method="POST" action="/login">
+            <div class="form-group">
+                <label for="fio">ФИО:</label>
+                <input type="text" class="form-control" id="fio" name="fio" required>
+            </div>
+            <div class="form-group">
+                <label for="otp">Одноразовый пароль:</label>
+                <input type="password" class="form-control" id="otp" name="otp" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Войти</button>
+            {% if error %}
+                <div class="alert alert-danger mt-3">{{ error }}</div>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="modal fade" id="instructionModal" tabindex="-1" role="dialog" aria-labelledby="instructionModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="instructionModalLabel">Инструкция</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Пожалуйста, внимательно ознакомьтесь с инструкцией перед началом тестирования:</p>
+                    <ul>
+                        <li>У вас есть 40 минут на выполнение теста.</li>
+                        <li>Внимательно выбирайте алиасы, нужный порядок и наименование написаны в задание</li>
+                        <li>Между вопросами можно свободно перемещаться.</li>
+                        <li>Для выполнения запроса используйте кнопку "Выполнить запрос". Эта кнопка позволяет вам протестировать ваш SQL-запрос и увидеть результаты.</li>
+                        <li>Кнопка "Отправить на проверку" закроет задание, и оно больше не будет доступно для изменений.</li>
+                        <li>Под каждым тестом находится описание таблиц, которые помогут вам понять структуру данных.</li>
+                        <li>Кнопка "Завершить тестирование" завершит ваше тестирование, и ваши результаты будут сохранены.</li>
+                        <li>Если время истечет, тестирование будет автоматически завершено.</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="continueBtn">Продолжить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            {% if show_instructions %}
+                $('#instructionModal').modal('show');
+            {% endif %}
+        });
+
+        document.getElementById('continueBtn').addEventListener('click', function() {
+            window.location.href = "{{ url_for('question', id=1) }}";
+        });
+    </script>
+</body>
+</html>

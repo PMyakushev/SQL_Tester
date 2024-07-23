@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL тестирование Самокат</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">SQL тестирование Самокат</h1>
+
+        <!-- Вопросы -->
+        <div class="text-center">
+            <h3 id="question-text">{{ question['text'].replace('\n', '<br>')|safe }}</h3>
+            <p>Оставшееся время: <span id="remaining-time">{{ remaining_time_str }}</span></p>
+            <p>Попытки: <span id="attempts">{{ attempts }}</span> из 5</p>
+            <div class="mt-3">
+                <a href="/question/{{ question['id'] - 1 if question['id'] > 1 else 7 }}" class="btn btn-outline-primary">Назад</a>
+                <a href="/question/{{ question['id'] % 7 + 1 }}" class="btn btn-outline-primary">Вперед</a>
+            </div>
+        </div>
+
+        <!-- SQL-форма -->
+        <div id="sql-form-container" class="row mt-5">
+            <div class="col-md-12">
+                <form id="sql-form">
+                    <div class="form-group">
+                        <textarea name="query" class="form-control" rows="5" placeholder="Введите ваш SQL запрос..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Выполнить</button>
+                </form>
+                <button id="final-submit" class="btn btn-success btn-block mt-3">Итоговая проверка</button>
+                <div class="mt-3" id="output"></div>
+            </div>
+        </div>
+
+        <!-- Связи таблиц -->
+        <div class="row mt-5">
+            <h2 class="text-center w-100">Tаблицы для тестирования</h2>
+            <div id="canvas" class="d-flex flex-wrap justify-content-center"></div>
+        </div>
+
+        <!-- Завершение тестирования -->
+        <div class="text-center mt-3">
+            <a href="/finish_test" class="btn btn-danger">Завершить тестирование</a>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // SQL-форма
+            $('#sql-form').on('submit', function(e) {
+                e.preventDefault();
+                $.post('/execute_sql', $(this).serialize(), function(data) {
+                    $('#output').html(data);
+                    $('#output table').addClass('table table-striped');
+
+                    // Обновление попыток после выполнения запроса
+                    var attempts = parseInt($('#attempts').text()) + 1;
+                    $('#attempts').text(attempts);
+
+                    // Если попыток превышено, скрываем форму и показываем только итоговую проверку
+                    if (attempts >= 5) {
+                        $('#sql-form-container form').hide();
+                        $('#final-submit').show();
+                    }
+                });
+            });
+
+            // Итоговая проверка
+            $('#final-submit').on('click', function(e) {
+                e.preventDefault();
+
+                // Проверяем, пуст ли элемент #output
+                if ($('#output').is(':empty')) {
+                    $.post('/final_submit', { query: $('textarea[name="query"]').val(), question_id: {{ question['id'] }} }, function(data) {
+                        $('#output').html(data);
+                        if (data.indexOf("Error:") === -1) {
+                            $('#sql-form-container').hide();  // Скрыть форму после итоговой проверки
+
+                            // Скрываем вопрос из списка
+                            $('#question-text').parent().hide();
+
+                            // Сохраняем состояние завершенного задания в localStorage
+                            localStorage.setItem('question_' + {{ question['id'] }} + '_completed', 'true');
+
+                            // Проверяем, остались ли еще активные вопросы
+                            var activeQuestions = 0;
+                            for (var i = 1; i <= 7; i++) {
+                                if (!localStorage.getItem('question_' + i + '_completed')) {
+                                    activeQuestions++;
+                                }
+                            }
+
+                            if (activeQuestions === 0) {
+                                // Все задания завершены, переходим на страницу завершения тестирования
+                                window.location.href = '/finish_test';
+                            } else {
+                                setTimeout(function() {
+                                    // Переход к следующему вопросу
+                                    var nextUrl = '/question/' + ({{ question['id'] }} % 7 + 1);
+                                    window.location.href = nextUrl;
+                                }, 2000);  // Перенаправить на следующую страницу через 2 секунды
+                            }
+                        }
+                    });
+                }
+            });
+
+            let remainingTime = Math.floor({{ remaining_time|default(2400) }});  // В секундах
+            function updateTimer() {
+                let minutes = Math.floor(remainingTime / 60);
+                let seconds = remainingTime % 60;
+                $('#remaining-time').text(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
+                remainingTime--;
+
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Время вышло. Пожалуйста, завершите ваши действия.');
+                    window.location.href = '/login';
+                }
+            }
+
+            let timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();  // Вызов функции обновления таймера для первичного отображения времени
+
+            // Вызов функции отображения таблиц
+            displayTables();
+
+            function displayTables() {
+                const tables = {
+                    "lost": [
+                        ["DATE", "datetime"],
+                        ["WAREHOUSE_ID", "integer"],
+                        ["PRODUCT_ID", "integer"],
+                        ["ITEM_ID", "integer"],
+                        ["QUANTITY", "decimal"],
+                        ["AMOUNT", "decimal"]
+                    ],
+                    "order_line": [
+                        ["ORDER_ID", "integer"],
+                        ["DATE", "datetime"],
+                        ["WAREHOUSE_ID", "integer"],
+                        ["PRODUCT_ID", "integer"],
+                        ["PRICE", "decimal"],
+                        ["REGULAR_PRICE", "decimal"],
+                        ["COST_PRICE", "decimal"],
+                        ["QUANTITY", "decimal"],
+                        ["PAID_AMOUNT", "decimal"]
+                    ],
+                    "orders": [
+                        ["ORDER_ID", "integer"],
+                        ["WAREHOUSE_ID", "integer"],
+                        ["USER_ID", "integer"],
+                        ["DATE", "datetime"],
+                        ["PAID_AMOUNT", "decimal"],
+                        ["QUANTITY", "decimal"]
+                    ],
+                    "products": [
+                        ["PRODUCT_ID", "integer"],
+                        ["NAME", "varchar"],
+                        ["GROUP1", "varchar"],
+                        ["GROUP2", "varchar"],
+                        ["GROUP3", "varchar"],
+                        ["WEIGHT", "decimal"],
+                        ["SHELF_LIFE", "integer"]
+                    ],
+                    "warehouses": [
+                        ["WAREHOUSE_ID", "integer"],
+                        ["NAME", "varchar"],
+                        ["CITY", "varchar"],
+                        ["DATE_OPEN", "date"],
+                        ["DATE_CLOSE", "date"]
+                    ]
+                };
+
+                const container = document.getElementById('canvas');
+                container.innerHTML = ''; // Очищаем контейнер перед добавлением таблиц
+                Object.keys(tables).forEach((table) => {
+                    const tableDiv = document.createElement('div');
+                    tableDiv.style.padding = '10px';
+                    tableDiv.style.backgroundColor = '#f8f9fa';
+                    tableDiv.style.border = '1px solid #ced4da';
+                    tableDiv.style.borderRadius = '4px';
+                    tableDiv.style.marginBottom = '10px';
+                    tableDiv.style.marginRight = '10px';
+
+                    const titleDiv = document.createElement('div');
+                    titleDiv.style.fontWeight = 'bold';
+                    titleDiv.style.marginBottom = '5px';
+                    titleDiv.innerText = table;
+                    tableDiv.appendChild(titleDiv);
+
+                    tables[table].forEach((col) => {
+                        const colDiv = document.createElement('div');
+                        colDiv.innerText = `${col[0]}: ${col[1]}`;
+                        tableDiv.appendChild(colDiv);
+                    });
+
+                    container.appendChild(tableDiv);
+                });
+            }
+
+            // Display the tables once the document is ready
+            document.addEventListener('DOMContentLoaded', function() {
+                if ({{ remaining_time|default(0) }} > 0) {
+                    displayTables();
+                }
+            });
+
+            // Показываем кнопку итоговой проверки всегда
+            $('#final-submit').show();
+        });
+    </script>
+</body>
+</html>
+

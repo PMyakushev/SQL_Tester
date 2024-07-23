@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вопрос завершен</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Вопрос завершен</h1>
+        <div class="text-center mb-4">
+            <p>Вопрос номер {{ completed_question_id }} успешно завершен.</p>
+            <p>Вот список оставшихся вопросов:</p>
+            {% for question in remaining_questions %}
+                <a href="{{ url_for('question', id=question.id) }}" class="btn btn-secondary m-1">Вопрос {{ question.id }}</a>
+            {% endfor %}
+        </div>
+        <!-- Завершение тестирования -->
+        <div class="text-center mt-3">
+            <a href="/finish_test" class="btn btn-danger">Завершить тестирование</a>
+        </div>
+    </div>
+</body>
+</html>

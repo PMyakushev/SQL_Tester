@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Итоговые результаты</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Итоговые результаты</h1>
+        <div class="mt-5">
+            {% for result in results %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        Вопрос {{ result['question_id'] }}
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Ваш запрос:</strong></p>
+                        <pre>{{ result['query'] }}</pre>
+                        <p><strong>Результат:</strong></p>
+                        {{ result['result']|safe }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-5">
+            <a href="/" class="btn btn-primary">Вернуться на главную</a>
+        </div>
+    </div>
+</body>
+</html>

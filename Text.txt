@@ -1,0 +1,49 @@
+
+cd C:\Users\pmyakishev\SQL_Tester_final\my_app
+
+python -m venv venv
+
+venv\Scripts\activate
+
+python app.py
+http://localhost:8000
+
+
+
+
+ssh root@2.59.43.100
+
+
+https://github.com/PMyakushev/SQL_Tester_final
+
+# Остановка текущего сервиса
+systemctl stop sql_tester
+
+# Удаление существующего репозитория
+rm -rf /opt/SQL_Tester_final
+
+# Клонирование репозитория
+cd /opt
+git clone https://github.com/PMyakushev/SQL_Tester_final.git
+cd SQL_Tester_final
+
+# Настройка виртуального окружения и установка зависимостей
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Исправление пути в app.py
+nano /opt/SQL_Tester_final/my_app/app.py
+
+# Вносим изменения в app.py и сохраняем:
+# base_path = os.path.join(base_dir, '..', 'Тестируемые')
+
+# Создание директории Тестируемые, если она не существует
+mkdir -p /opt/SQL_Tester_final/Тестируемые
+
+# Перезапуск службы
+systemctl restart sql_tester
+systemctl status sql_tester
+
+# Проверка журналов для диагностики
+journalctl -u sql_tester.service -f

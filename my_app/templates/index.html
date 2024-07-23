@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL тестирование Самокат</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <style>
+        .table-container {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        .table-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">SQL тестирование Самокат</h1>
+
+        <!-- Добавим ссылки для навигации по вопросам -->
+        <div class="text-center mb-4">
+            {% for i in range(1, 8) if i|string not in completed_questions %}
+                <a href="{{ url_for('question', id=i) }}" class="btn btn-secondary m-1" id="question-link-{{ i }}">Вопрос {{ i }}</a>
+            {% endfor %}
+        </div>
+
+        <div class="text-center">
+            <h3 id="question-text">{{ question['text'].replace('\n', '<br>') | safe }}</h3>
+            <p>Оставшееся время: <span id="remaining-time">{{ remaining_time_str }}</span></p>
+        </div>
+
+        <div id="sql-form-container" class="row mt-5">
+            <div class="col-md-12">
+                <form id="sql-form" method="post" action="/execute_sql">
+                    <div class="form-group">
+                        <textarea id="query-input" name="query" class="form-control" rows="5" placeholder="Введите ваш SQL запрос..."></textarea>
+                    </div>
+                    <button id="execute-button" type="submit" class="btn btn-primary btn-block">Выполнить запрос</button>
+                </form>
+                <button id="final-submit" class="btn btn-success btn-block mt-3">Отправить на проверку</button>
+                <div class="mt-3" id="output">{{ result | safe }}</div>
+            </div>
+        </div>
+
+        <!-- Связи таблиц -->
+        <div class="row mt-5">
+            <h2 class="text-center w-100">Таблицы для тестирования</h2>
+            <div id="canvas" class="d-flex flex-wrap justify-content-center"></div>
+        </div>
+
+        <!-- Завершение тестирования -->
+        <div class="text-center mt-3">
+            <a href="/finish_test" class="btn btn-danger">Завершить тестирование</a>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Процесс выполнения SQL запроса
+            $('#sql-form').on('submit', function(e) {
+                e.preventDefault();
+                $('#output').html(''); // Очистка старого результата
+                $.post('/execute_sql', $(this).serialize(), function(response) {
+                    if (response.error) {
+                        $('#output').html('<pre>Error: ' + response.error + '</pre>');
+                    } else {
+                        $('#output').html(response.result);
+                        $('#output table').addClass('table table-striped');
+                    }
+                }).fail(function(xhr) {
+                    var response = xhr.responseJSON;
+                    $('#output').html('<pre>Error: ' + response.error + '</pre>');
+                });
+            });
+
+            // Процесс итоговой проверки
+            $('#final-submit').on('click', function(e) {
+                e.preventDefault();
+                const questionId = '{{ question["id"] }}';
+                $.post('/final_submit', { query: $('textarea[name="query"]').val(), question_id: questionId }, function(response) {
+                    if (response.error) {
+                        $('#output').html('<pre>Error: ' + response.error + '</pre>');
+                    } else {
+                        $('#question-link-' + questionId).hide(); // Скрываем ссылку на текущий вопрос
+                        window.location.href = response.next_url;
+                    }
+                }).fail(function(xhr) {
+                    var response = xhr.responseJSON;
+                    $('#output').html('<pre>Error: ' + response.error + '</pre>');
+                });
+            });
+
+            // Обновление таймера
+            var remainingTime = Math.floor({{ remaining_time.total_seconds() }});
+            function updateTimer() {
+                var minutes = Math.floor(remainingTime / 60);
+                var seconds = remainingTime % 60;
+                $('#remaining-time').text(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
+                remainingTime--;
+
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Время вышло. Пожалуйста, завершите ваши действия.');
+                    window.location.href = '/finish_test';
+                }
+            }
+
+            var timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+
+            function displayTables() {
+                var tables = {
+                    "lost": [
+                        ["date", "datetime", "дата и время проведения потерь"],
+                        ["warehouse_id", "integer", "идентификатор склада"],
+                        ["product_id", "integer", "идентификатор товара"],
+                        ["item_id", "integer", "идентификатор статьи потерь. Например, списание по сроку годности - 146"],
+                        ["quantity", "decimal", "потери в количестве"],
+                        ["amount", "decimal", "сумма потерь"]
+                    ],
+                    "order_line": [
+                        ["order_id", "integer", "идентификатор заказа"],
+                        ["date", "datetime", "дата и время создания заказа"],
+                        ["warehouse_id", "integer", "идентификатор склада"],
+                        ["product_id", "integer", "идентификатор товара"],
+                        ["price", "decimal", "цена продажи"],
+                        ["regular_price", "decimal", "регулярная цена"],
+                        ["cost_price", "decimal", "цена в себестоимости"],
+                        ["quantity", "decimal", "количество проданных единиц товара"],
+                        ["paid_amount", "decimal", "сумма продаж"]
+                    ],
+                    "orders": [
+                        ["order_id", "integer", "идентификатор заказа"],
+                        ["warehouse_id", "integer", "идентификатор склада"],
+                        ["user_id", "integer", "идентификатор клиента"],
+                        ["date", "datetime", "дата и время создания заказа"],
+                        ["paid_amount", "decimal", "сумма заказа"],
+                        ["quantity", "decimal", "количество единиц товаров в заказе"]
+                    ],
+                    "products": [
+                        ["product_id", "integer", "идентификатор товара"],
+                        ["name", "varchar", "наименование товара"],
+                        ["group1", "varchar", "группа товаров 1 уровня"],
+                        ["group2", "varchar", "группа товаров 2 уровня"],
+                        ["group3", "varchar", "группа товаров 3 уровня"],
+                        ["weight", "decimal", "вес товара"],
+                        ["shelf_life", "integer", "срок годности товара в днях"]
+                    ],
+                    "warehouses": [
+                        ["warehouse_id", "integer", "идентификатор склада"],
+                        ["name", "varchar", "наименование склада"],
+                        ["city", "varchar", "город"],
+                        ["date_open", "date", "дата открытия склада"],
+                        ["date_close", "date", "дата закрытия склада"]
+                    ]
+                };
+
+                const container = document.getElementById('canvas');
+                container.innerHTML = ''; // Очищаем контейнер перед добавлением таблиц
+                Object.keys(tables).forEach((table) => {
+                    const tableContainer = document.createElement('div');
+                    tableContainer.className = 'table-container';
+
+                    const title = document.createElement('div');
+                    title.className = 'table-title';
+                    title.innerText = table;
+                    tableContainer.appendChild(title);
+
+                    tables[table].forEach((col) => {
+                        const colDiv = document.createElement('div');
+                        colDiv.innerText = `${col[0]}: ${col[1]} (${col[2]})`;
+                        tableContainer.appendChild(colDiv);
+                    });
+
+                    container.appendChild(tableContainer);
+                });
+            }
+
+            // Показываем таблицы при загрузке страницы
+            displayTables();
+        });
+    </script>
+</body>
+</html>
+
