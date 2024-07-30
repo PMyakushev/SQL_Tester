@@ -12,9 +12,13 @@
         <div class="text-center mb-4">
             <p>Вопрос номер {{ completed_question_id }} успешно завершен.</p>
             <p>Вот список оставшихся вопросов:</p>
-            {% for question in remaining_questions %}
-                <a href="{{ url_for('question', id=question.id) }}" class="btn btn-secondary m-1">Вопрос {{ question.id }}</a>
-            {% endfor %}
+            <div class="question-links">
+                {% for question in remaining_questions %}
+                    {% if question.id == 6 or question.id == 7 %}
+                        <a href="{{ url_for('question', id=question.id) }}" class="btn btn-secondary m-1">Вопрос {{ question.id }}</a>
+                    {% endif %}
+                {% endfor %}
+            </div>
         </div>
         <!-- Завершение тестирования -->
         <div class="text-center mt-3">
