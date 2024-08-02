@@ -18,41 +18,61 @@
             font-weight: bold;
             margin-bottom: 5px;
         }
+        .question-text {
+            font-size: 1.25rem;
+            text-align: left;
+            width: 100%;
+        }
+        .btn-current {
+            background-color: #17a2b8; /* Example color: change to what you need */
+            color: white; /* Ensure contrast against the background */
+        }
     </style>
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">SQL тестирование Самокат</h1>
+        <div class="text-left">
+            <p class="text-center">Оставшееся время: <span id="remaining-time">{{ remaining_time_str }}</span></p>
+        </div>
 
         <!-- Добавим ссылки для навигации по вопросам -->
         <div class="text-center mb-4">
-            {% for i in range(1, 8) if i|string not in completed_questions %}
-                <a href="{{ url_for('question', id=i) }}" class="btn btn-secondary m-1" id="question-link-{{ i }}">Вопрос {{ i }}</a>
+            {% for i in range(1, 8) %}
+                <a href="{{ url_for('question', id=i) }}"
+                   class="btn
+                          {% if request.path == url_for('question', id=i) %}btn-current
+                          {% elif i|string in completed_questions %}btn-success
+                          {% else %}btn-secondary
+                          {% endif %} m-1"
+                   id="question-link-{{ i }}">Вопрос {{ i }}</a>
             {% endfor %}
         </div>
 
-        <div class="text-center">
-            <h3 id="question-text">{{ question['text'].replace('\n', '<br>') | safe }}</h3>
-            <p>Оставшееся время: <span id="remaining-time">{{ remaining_time_str }}</span></p>
+        <div class="text-left">
+            <h3 class="question-text" id="question-text">{{ question['text'].replace('\n', '<br>') | safe }}</h3>
         </div>
 
         <div id="sql-form-container" class="row mt-5">
             <div class="col-md-12">
                 <form id="sql-form" method="post" action="/execute_sql">
                     <div class="form-group">
-                        <textarea id="query-input" name="query" class="form-control" rows="5" placeholder="Введите ваш SQL запрос..."></textarea>
+                        <textarea id="query-input" name="query" class="form-control" rows="10" placeholder="Введите ваш SQL запрос..."></textarea> <!-- Размер SQL окна-->
                     </div>
                     <button id="execute-button" type="submit" class="btn btn-primary btn-block">Выполнить запрос</button>
                 </form>
                 <button id="final-submit" class="btn btn-success btn-block mt-3">Отправить на проверку</button>
-                <div class="mt-3" id="output">{{ result | safe }}</div>
+                <div class="mt-3" id="output"></div>
+                <div class="mt-3" id="row-count"></div> <!-- Новый элемент для отображения количества строк -->
             </div>
         </div>
 
+
         <!-- Связи таблиц -->
-        <div class="row mt-5">
-            <h2 class="text-center w-100">Таблицы для тестирования</h2>
-            <div id="canvas" class="d-flex flex-wrap justify-content-center"></div>
+        <div class="container mt-5">
+            <div class="row">
+                <h2 class="text-center w-100">Таблицы для тестирования</h2>
+                <div id="canvas" class="d-flex flex-wrap justify-content-center w-100"></div>
+            </div>
         </div>
 
         <!-- Завершение тестирования -->
@@ -62,17 +82,35 @@
     </div>
 
     <script>
-        $(document).ready(function() {
+$(document).ready(function() {
+            // Function to add LIMIT clause to SQL queries
+            function addLimitClause(query, limit) {
+                // Check if the query already contains a LIMIT clause
+                var limitRegex = /LIMIT\s+\d+/i;
+                if (limitRegex.test(query)) {
+                    // Replace existing LIMIT clause with the new one
+                    return query.replace(limitRegex, 'LIMIT ' + limit);
+                } else {
+                    // Add LIMIT clause to the end of the query
+                    return query.trim() + ' LIMIT ' + limit;
+                }
+            }
+
             // Процесс выполнения SQL запроса
             $('#sql-form').on('submit', function(e) {
                 e.preventDefault();
                 $('#output').html(''); // Очистка старого результата
-                $.post('/execute_sql', $(this).serialize(), function(response) {
+
+                var query = $('#query-input').val();
+                var limitedQuery = addLimitClause(query, 10); // Добавление LIMIT 50
+
+                $.post('/execute_sql', { query: limitedQuery }, function(response) {
                     if (response.error) {
                         $('#output').html('<pre>Error: ' + response.error + '</pre>');
                     } else {
                         $('#output').html(response.result);
                         $('#output table').addClass('table table-striped');
+                        $('#row-count').text(`Выведено 10 из 10000 строк`);
                     }
                 }).fail(function(xhr) {
                     var response = xhr.responseJSON;
