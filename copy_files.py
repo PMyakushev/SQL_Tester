@@ -1,7 +1,7 @@
 import subprocess
 
 # Путь откуда забираем файлы
-source_path = 'св/'Ядыкин Алексей'/*.json'
+source_path = '/opt/SQL_Tester/my_app/Тестируемые/'Ядыкин Алексей'/*.json'
 
 # Путь куда копируем файлы
 destination_path = '/opt/SQL_Tester/my_app/ResultEtalon/'

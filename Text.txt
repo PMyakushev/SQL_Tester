@@ -12,221 +12,39 @@ cp -rf //opt/SQL_Tester/my_app/Тестируемые/Ядыкин\ Алексе
 
 
 
---Сервер
 ssh root@2.59.43.100
 
---Гит Реп
+
 https://github.com/PMyakushev/SQL_Tester
 
-
-
-Подключитесь к серверу по SSH:
-
-bash
-
-ssh root@2.59.43.100
-Остановите текущий сервис:
-
-bash
-
+# Остановка текущего сервиса
 systemctl stop sql_tester
-Удалите существующий репозиторий, если он еще не удален:
 
-bash
+# Удаление существующего репозитория
+rm -rf /opt/SQL_Tester_final
 
-rm -rf /opt/SQL_Tester
-Клонируйте репозиторий:
-
-bash
-
+# Клонирование репозитория
 cd /opt
-git clone https://github.com/PMyakushev/SQL_Tester.git
-Перейдите в каталог с репозиторием:
-
-bash
-
 cd /opt/SQL_Tester
-Настройте виртуальное окружение и установите зависимые пакеты:
+cd SQL_Tester
 
-bash
-
+# Настройка виртуального окружения и установка зависимостей
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-Отредактируйте файл app.py:
 
-bash
+# Исправление пути в app.py
+nano /opt/SQL_Tester_final/my_app/app.py
 
-nano /opt/SQL_Tester/my_app/app.py
-Внесите изменения в app.py, изменив строку для base_path:
+# Вносим изменения в app.py и сохраняем:
+# base_path = os.path.join(base_dir, '..', 'Тестируемые')
 
-python
+# Создание директории Тестируемые, если она не существует
+mkdir -p /opt/SQL_Tester_final/Тестируемые
 
-base_path = os.path.join(base_dir, '..', 'Тестируемые')
-Создайте директорию Тестируемые, если она не существует:
-
-bash
-
-mkdir -p /opt/SQL_Tester/Тестируемые
-Перезапустите службу:
-
-bash
-
+# Перезапуск службы
 systemctl restart sql_tester
 systemctl status sql_tester
-Проверьте журналы для диагностики:
 
-bash
-
+# Проверка журналов для диагностики
 journalctl -u sql_tester.service -f
-Данной инструкцией вы сможете заново загрузить репозиторий и запустить ваш сервис "sql_tester". Удостоверьтесь, что все зависимости установлены корректно и все шаги выполнены правильно, чтобы сервис заработал без ошибок.
-
-(.venv) root@3223519-bn36370:/opt/SQL_Tester# systemctl restart sql_tester
-(.venv) root@3223519-bn36370:/opt/SQL_Tester# systemctl status sql_tester
-× sql_tester.service - SQL Tester Final
-     Loaded: loaded (/etc/systemd/system/sql_tester.service; enabled; preset: enabled)
-     Active: failed (Result: exit-code) since Tue 2024-07-23 19:33:43 MSK; 3s ago
-   Duration: 18ms
-    Process: 28115 ExecStart=/opt/SQL_Tester/.venv/bin/python -m waitress --port=8000 my_app.app:app (code=exited, status=1/FAILURE)
-   Main PID: 28115 (code=exited, status=1/FAILURE)
-        CPU: 16ms
-
-Jul 23 19:33:43 3223519-bn36370.twc1.net systemd[1]: Started sql_tester.service - SQL Tester Final.
-Jul 23 19:33:43 3223519-bn36370.twc1.net python[28115]: /opt/SQL_Tester/.venv/bin/python: No module named waitress
-Jul 23 19:33:43 3223519-bn36370.twc1.net systemd[1]: sql_tester.service: Main process exited, code=exited, status=1/FAILURE
-Jul 23 19:33:43 3223519-bn36370.twc1.net systemd[1]: sql_tester.service: Failed with result 'exit-code'.
-(.venv) root@3223519-bn36370:/opt/SQL_Tester#
-Сообщение об ошибке указывает на то, что модуль waitress не установлен в вашем виртуальном окружении. Давайте установим его и перезапустим сервис.
-
-Шаги для решения проблемы:
-Активируйте ваше виртуальное окружение, если оно ещё не активно:
-
-bash
-
-source /opt/SQL_Tester/.venv/bin/activate
-Установите waitress:
-
-bash
-
-pip install waitress
-Проверьте, что waitress установлен:
-
-bash
-
-pip show waitress
-Перезапустите службу:
-
-bash
-
-systemctl restart sql_tester
-systemctl status sql_tester
-Проверьте журналы, если снова возникнут ошибки:
-
-bash
-
-journalctl -u sql_tester.service -f
-
-1 - 7 вопрос
-        <div class="text-center mb-4">
-            {% for i in range(1, 8) if i|string not in completed_questions %}
-                <a href="{{ url_for('question', id=i) }}" class="btn btn-secondary m-1" id="question-link-{{ i }}">Вопрос {{ i }}</a>
-            {% endfor %}
-        </div>
-6-7
-<div class="text-center mb-4">
-    {% for i in range(6, 8) if i|string not in completed_questions %}
-        <a href="{{ url_for('question', id=i) }}" class="btn btn-secondary m-1" id="question-link-{{ i }}">Вопрос {{ i }}</a>
-    {% endfor %}
-</div>
-
-
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Проверка тестирования</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        .table th, .table td {
-            text-align: center;
-            vertical-align: middle;
-        }
-        .table-form {
-            max-width: 100px;
-            margin: 0 auto;
-        }
-        .table thead th {
-            white-space: nowrap;
-        }
-        .container {
-            max-width: 100%;
-        }
-    </style>
-</head>
-<body>
-<div class="container mt-5">
-    <h1 class="text-center">Проверка тестирования</h1>
-    <table class="table table-bordered" style="width: 100%;">
-        <thead class="thead-dark">
-        <tr>
-            <th scope="col">Тестируемый (Дата создания)</th>
-            {% for task_id in range(1, 8) %}
-            <th scope="col">Задача {{ task_id }}</th>
-            {% endfor %}
-            {% for i in range(1, 6) %}
-            <th scope="col">Excel {{ i }}</th>
-            {% endfor %}
-            <th scope="col">Итого</th>
-            <th scope="col">Загрузка Excel</th>
-            <th scope="col">Скачать Excel</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for user, user_data in test_results.items() %}
-        <tr>
-            <td>{{ user }} ({{ user_data.creation_date }})</td>
-            {% for task_id in range(1, 3) %}
-            {% if task_id in user_data.results %}
-            <td>
-                {% if user_data.results[task_id] %}
-                <a href="{{ url_for('admin_details', user=user, task=task_id) }}" class="btn btn-success">1</a>
-                {% else %}
-                <a href="{{ url_for('admin_details', user=user, task=task_id) }}" class="btn btn-danger">0</a>
-                {% endif %}
-            </td>
-            {% else %}
-            <td><a href="{{ url_for('admin_details', user=user, task=task_id) }}" class="btn btn-secondary">-</a></td>
-            {% endif %}
-            {% endfor %}
-            {% for i in range(1, 6) %}
-            <td>
-                <form action="{{ url_for('update_excel_score', user=user, task_id='Excel_' ~ i) }}" method="POST" class="table-form">
-                    <input type="number" name="score" value="{{ user_data.excel_scores.get('Excel_' ~ i, 0) }}" min="0" max="1" step="0.1" class="form-control">
-                    <button type="submit" class="btn btn-primary mt-2">Сохранить</button>
-                </form>
-            </td>
-            {% endfor %}
-            <td>{{ user_data.total }}</td>
-            <td>
-                <form action="{{ url_for('upload_excel', user=user) }}" method="post" enctype="multipart/form-data" class="table-form">
-                    <input type="file" name="file" accept=".xlsx" class="form-control mb-2" required>
-                    <button type="submit" class="btn btn-primary">Загрузить</button>
-                </form>
-            </td>
-            <td>
-                {% for excel_file in user_data.excel_files %}
-                <a href="{{ url_for('download_file', user=user, filename=excel_file) }}">{{ excel_file }}</a><br>
-                {% endfor %}
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
-</body>
-</html>
-
-
-
-
