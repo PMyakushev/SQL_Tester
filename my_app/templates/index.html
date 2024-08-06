@@ -27,9 +27,20 @@
             background-color: #17a2b8; /* Example color: change to what you need */
             color: white; /* Ensure contrast against the background */
         }
+        #output {
+            max-height: 700px; /* Set the maximum height */
+            overflow-y: scroll; /* Enable vertical scrolling */
+        }
+        .container-fluid {
+            padding-left: 0;
+            padding-right: 0;
+        }
     </style>
 </head>
 <body>
+    <div class="text-right mt-3">
+            <a href="/finish_test" class="btn btn-danger">Завершить тестирование</a>
+    </div>
     <div class="container mt-5">
         <div class="text-left">
             <p class="text-center">Оставшееся время: <span id="remaining-time">{{ remaining_time_str }}</span></p>
@@ -68,7 +79,7 @@
 
 
         <!-- Связи таблиц -->
-        <div class="container mt-5">
+        <div class="container-fluid mt-5">
             <div class="row">
                 <h2 class="text-center w-100">Таблицы для тестирования</h2>
                 <div id="canvas" class="d-flex flex-wrap justify-content-center w-100"></div>
@@ -76,17 +87,15 @@
         </div>
 
         <!-- Завершение тестирования -->
-        <div class="text-center mt-3">
-            <a href="/finish_test" class="btn btn-danger">Завершить тестирование</a>
-        </div>
+
     </div>
 
-    <script>
-$(document).ready(function() {
+   <script>
+        $(document).ready(function() {
             // Function to add LIMIT clause to SQL queries
             function addLimitClause(query, limit) {
                 // Check if the query already contains a LIMIT clause
-                var limitRegex = /LIMIT\s+\d+/i;
+                                var limitRegex = /LIMIT\s+\d+/i;
                 if (limitRegex.test(query)) {
                     // Replace existing LIMIT clause with the new one
                     return query.replace(limitRegex, 'LIMIT ' + limit);
@@ -102,7 +111,7 @@ $(document).ready(function() {
                 $('#output').html(''); // Очистка старого результата
 
                 var query = $('#query-input').val();
-                var limitedQuery = addLimitClause(query, 10); // Добавление LIMIT 50
+                var limitedQuery = addLimitClause(query, 200); // Добавление LIMIT 50
 
                 $.post('/execute_sql', { query: limitedQuery }, function(response) {
                     if (response.error) {
@@ -110,7 +119,7 @@ $(document).ready(function() {
                     } else {
                         $('#output').html(response.result);
                         $('#output table').addClass('table table-striped');
-                        $('#row-count').text(`Выведено 10 из 10000 строк`);
+                        $('#row-count').text(`Выведено 200 из 10000 строк`);
                     }
                 }).fail(function(xhr) {
                     var response = xhr.responseJSON;
@@ -204,7 +213,7 @@ $(document).ready(function() {
                 container.innerHTML = ''; // Очищаем контейнер перед добавлением таблиц
                 Object.keys(tables).forEach((table) => {
                     const tableContainer = document.createElement('div');
-                    tableContainer.className = 'table-container';
+                    tableContainer.className = 'table-container w-100';
 
                     const title = document.createElement('div');
                     title.className = 'table-title';
